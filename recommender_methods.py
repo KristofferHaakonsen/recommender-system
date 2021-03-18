@@ -99,4 +99,75 @@ def content_recommendation(df, k=20):
             ptid1 = ptid2
             ptid2 = tid
             puid = uid
+    evaluate(pred, actual, k)
     return pred, actual
+
+
+def decay_function(target_time, user_item_time):
+    decay_rate = 0.8
+    return exp(- decay_rate * (target_time - user_item_time))
+
+
+def collaborative_filtering_user_based(rm, userID, k=2):
+    """
+    performes collaborative_filtering on rating matrix and plot the learning curve.
+    """
+    print(rm)
+
+    # Compute peer group of the user
+    for user in range(len(rm)):
+        if user != userID:
+            similarity, p_value = pearsonr(rm[userID], rm[user])
+            mean = average(rm[user])
+            rm[user] = rm[user] + [similarity] + [mean]
+
+    # Add for own user. Because sort fails if it is shorter
+    rm[userID] = rm[userID] + [1] + [average(rm[userID])]
+
+    rm.sort(reverse=True, key=lambda x: x[5])
+
+    print("AFTER SORT: ", rm)
+
+    k_closest = rm[1: k + 1]
+
+    print("K CLOSEST ", k_closest)
+    # Predict the rate of item j
+
+    '''numerator = 0
+    denominator = 0
+
+    for user in range(len(k_closest)):
+        # for item in range(len(k_closest[user]) - 2):
+        numerator += k_closest[user][5] * (k_closest[user][3] - k_closest[user][6])
+        denominator += abs(k_closest[user][5])
+
+    ruj = rm[userID][6] + numerator / denominator
+    print(ruj)'''
+
+
+
+# Plot prediction
+
+
+if __name__ == '__main__':
+    # load temp_data
+    # map_lst = []
+    # for line in open('data/active1000/20170101'):
+    # obj = json.loads(line.strip())
+    #  if obj is not None:
+    #       map_lst.append(obj)
+    # df = pd.DataFrame(map_lst)
+
+    # rm = rating_matrix(df, debugSlice=200)
+
+    # content_recommendation(df)
+
+    ### Collaboratib filtering
+
+    rm = [[10, 1, 3, 0, 1],
+          [30, 20, 4, 10, 1],
+          [5, 30, 2, 6, 7],
+          [6, 20, 6, 0, 4],
+          [10, 20, 5, 0, 1]]
+
+    collaborative_filtering_user_based(rm, 0)
