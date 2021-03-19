@@ -5,43 +5,42 @@ import numpy as np
 
 def rating_matrix(df, debugSlice=None):
     '''
-        [Much of this code is from project_example]
-        return a simple rating_matrix where rating is activeTime.
-        @debugSlice <None|int>: if int, use only {debugSlice} first rows in df 
+        return a df rating_matrix where ratings are 1 if read.
+        @debugSlice <None|int>: if int, use only {debugSlice} first rows in df
     '''
 
-    # TODO keep this? in case the df includes nan activeTime
-    df['activeTime'] = df['activeTime'].fillna(0)
-    df = df[~df['documentId'].isnull()]
-    # TODO: we might be dropping valuable info below..
+    # add 1 as rating where there exists an event
+    def add_to_user_reading_list(row):
+        if not row['userId'] in reading_lists:
+            reading_lists[row['userId']] = {}
+        reading_lists[row['userId']][row['documentId']] = 1
+
+    # for each userId, a dictionary of read documentIds
+    reading_lists = {}
+
     df = df.drop_duplicates(subset=['userId', 'documentId'])
-    df = df.sort_values(by=['userId', 'time'])
+    # df = df.sort_values(by=['userId', 'time'])
 
     # Slice the RM for debug purposes
     if debugSlice:
         df = df[:debugSlice]
 
-    n_users = df['userId'].nunique()
-    n_items = df['documentId'].nunique()
+    # n_users = df['userId'].nunique()
+    # n_items = df['documentId'].nunique()
 
-    ratings = np.zeros((n_users, n_items))
-
-    # create column 'uid' which is a simplification of userId and in order
-    new_user = df['userId'].values[1:] != df['userId'].values[:-1]
-    new_user = np.r_[True, new_user]
-    df['uid'] = np.cumsum(new_user)
-
-    # create a simplified documentId "tid" and merge this with the original df
     item_ids = df['documentId'].unique().tolist()
     new_df = pd.DataFrame(
-        {'documentId': item_ids, 'tid': range(1, len(item_ids)+1)})
+        {'documentId': item_ids})
     df = pd.merge(df, new_df, on='documentId', how='outer')
-    df_ext = df[['uid', 'tid', 'activeTime']]
 
-    # add 1 as rating where there exists an event
-    for row in df_ext.itertuples():
-        ratings[row[1]-1, row[2]-1] = row[3]
-    return ratings
+    df.apply(add_to_user_reading_list, axis=1)
+
+    rating_matrix_df = pd.DataFrame.from_records(
+        list(reading_lists.values()), index=reading_lists.keys())
+
+    rating_matrix_df = rating_matrix_df.fillna(0.0)
+
+    return rating_matrix_df
 
 
 def rating_matrix_train_test_split(rm, fraction=0.2):
