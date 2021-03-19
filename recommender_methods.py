@@ -2,9 +2,13 @@
 import json
 import pandas as pd
 import matplotlib.pyplot as plt
+from scipy.stats import pearsonr
+
+from evaluation import evaluate
 from example_code import project_example
 from sklearn.metrics.pairwise import linear_kernel
 from sklearn.feature_extraction.text import TfidfVectorizer
+from numpy import average, exp
 
 
 def collaborative_filtering(train, test):
@@ -112,25 +116,25 @@ def collaborative_filtering_user_based(rm, userID, k=2):
     """
     performes collaborative_filtering on rating matrix and plot the learning curve.
     """
-    print(rm)
 
     # Compute peer group of the user
     for user in range(len(rm)):
         if user != userID:
-            similarity, p_value = pearsonr(rm[userID], rm[user])
-            mean = average(rm[user])
+            similarity, p_value = pearsonr(rm[userID][1:], rm[user][1:])
+            mean = average(rm[user][1:])
             rm[user] = rm[user] + [similarity] + [mean]
 
     # Add for own user. Because sort fails if it is shorter
-    rm[userID] = rm[userID] + [1] + [average(rm[userID])]
+    rm[userID] = rm[userID] + [1] + [average(rm[userID][1:])]
 
-    rm.sort(reverse=True, key=lambda x: x[5])
+    rm.sort(reverse=False, key=lambda x: x[5])
 
     print("AFTER SORT: ", rm)
 
     k_closest = rm[1: k + 1]
 
     print("K CLOSEST ", k_closest)
+
     # Predict the rate of item j
 
     '''numerator = 0
@@ -143,6 +147,8 @@ def collaborative_filtering_user_based(rm, userID, k=2):
 
     ruj = rm[userID][6] + numerator / denominator
     print(ruj)'''
+
+    return k_closest
 
 
 
@@ -164,10 +170,10 @@ if __name__ == '__main__':
 
     ### Collaboratib filtering
 
-    rm = [[10, 1, 3, 0, 1],
-          [30, 20, 4, 10, 1],
-          [5, 30, 2, 6, 7],
-          [6, 20, 6, 0, 4],
-          [10, 20, 5, 0, 1]]
+    rm = [["u0", 10, 1, 3, 0, 1],
+          ["u1",30, 20, 4, 10, 1],
+          ["u2", 5, 30, 2, 6, 7],
+          ["u3", 6, 20, 6, 0, 4],
+          ["u4", 10, 20, 5, 0, 1]]
 
     collaborative_filtering_user_based(rm, 0)
