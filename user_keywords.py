@@ -1,7 +1,6 @@
 import json
 import pandas as pd
 import os
-from preprocessing import clean_data
 import numpy as np
 
 
