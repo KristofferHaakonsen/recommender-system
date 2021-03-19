@@ -59,6 +59,8 @@ def rating_matrix_train_test_split(rm, fraction=0.2):
         # set the test_ratings to 0 in train
         train[user, test_ratings] = 0.
         test[user, test_ratings] = rm[user, test_ratings]
+    # Assert disjoint
+    assert(np.all((train * test) == 0))
     return train, test
 
 
