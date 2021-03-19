@@ -102,17 +102,39 @@ def get_user_counts(df_merged):
     return merged_kw
 
 
-def matrix_from_user_counts(df):
-    dictionary_set = set()
+def combine_dicts_in_row(row):
+    return {**row['category'], **row['keyword']}
 
-    def add_to_dictionary(dic):
+
+def get_user_profile(df):
+    def prefix_cat(dic):
+        new_dict = {}
         for key in dic:
-            dictionary_set.add(key)
+            new_dict['CAT_' + key] = dic[key]
+        return new_dict
 
-    def add_to_dictionary_cat(dic):
-        for key in dic:
-            dictionary_set.add('CAT_' + key)
+    def weight_multiply(num):
+        return 4 * num
 
-    df['keyword'].apply(add_to_dictionary)
-    df['category'].apply(add_to_dictionary_cat)
-    print(dictionary_set)
+    def weight_divide(num):
+        return 0.25 * num
+
+    df['category'] = df['category'].apply(prefix_cat)
+    df['combined_keywords'] = df.apply(combine_dicts_in_row, axis=1)
+
+    user_pref_df = pd.DataFrame.from_records(
+        df['combined_keywords'], index=df.index)
+
+    # convert NaN to 0
+    user_pref_df = user_pref_df.fillna(0)
+
+    # apply weights (decrease categories, increase keywords)
+    for column_name in user_pref_df.columns:
+        if column_name[0:4] == 'CAT_':
+            user_pref_df[column_name] = user_pref_df[column_name].apply(
+                weight_divide)
+        else:
+            user_pref_df[column_name] = user_pref_df[column_name].apply(
+                weight_multiply)
+
+    return user_pref_df
