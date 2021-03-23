@@ -116,15 +116,10 @@ def collaborative_filtering_user_based(rm, df_user_item, user_id, k=2):
     """
     # Compute peer group of the user
 
-
     user_id_row = rm.loc[user_id]
-
-
     with_pearson = rm.corrwith(user_id_row, axis=1)
 
     sorted_pearson = with_pearson.sort_values(ascending=False)
-
-
     k_closest = sorted_pearson[1: k + 1]
 
     print("K CLOSEST ", k_closest)
@@ -137,13 +132,9 @@ def collaborative_filtering_user_based(rm, df_user_item, user_id, k=2):
     k_user_read_articles = df_user_item.loc[k_closest.index[0]]
     k_user_read_articles = k_user_read_articles[k_user_read_articles != 0]
 
-    print(k_user_read_articles)
-
     for i in range(1, len(k_closest)):
         temp = df_user_item.loc[k_closest.index[i]]
         temp = temp[temp != 0]
-        print(i)
-        print(temp)
         k_user_read_articles = k_user_read_articles.combine(temp, max, fill_value=0)
 
     #k_user_read_articles = k_user_articles[k_user_articles != 0]
