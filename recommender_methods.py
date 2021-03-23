@@ -1,14 +1,12 @@
-
 import json
 import pandas as pd
 import matplotlib.pyplot as plt
-from scipy.stats import pearsonr
 
 from evaluation import evaluate
 from example_code import project_example
 from sklearn.metrics.pairwise import linear_kernel
 from sklearn.feature_extraction.text import TfidfVectorizer
-from numpy import average, exp
+from numpy import exp
 
 
 def collaborative_filtering(train, test):
@@ -59,7 +57,7 @@ def content_processing(df):
 
     item_ids = df['documentId'].unique().tolist()
     new_df = pd.DataFrame(
-        {'documentId': item_ids, 'tid': range(1, len(item_ids)+1)})
+        {'documentId': item_ids, 'tid': range(1, len(item_ids) + 1)})
     df = pd.merge(df, new_df, on='documentId', how='outer')
     df_item = df[['tid', 'category']].drop_duplicates(inplace=False)
     df_item.sort_values(by=['tid', 'category'], ascending=True, inplace=True)
@@ -94,7 +92,7 @@ def content_recommendation(df, k=20):
             idx = ptid1
             sim_scores = list(enumerate(cosine_sim[idx]))
             sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
-            sim_scores = sim_scores[1:k+1]
+            sim_scores = sim_scores[1:k + 1]
             sim_scores = [i for i, j in sim_scores]
             pred.append(sim_scores)
             actual.append(ptid2)
@@ -112,50 +110,56 @@ def decay_function(target_time, user_item_time):
     return exp(- decay_rate * (target_time - user_item_time))
 
 
-def collaborative_filtering_user_based(rm, userID, k=2):
+def collaborative_filtering_user_based(rm, df_user_item, user_id, k=2):
     """
     performes collaborative_filtering on rating matrix and plot the learning curve.
     """
-
     # Compute peer group of the user
-    for user in range(len(rm)):
-        if user != userID:
-            similarity, p_value = pearsonr(rm[userID][1:], rm[user][1:])
-            mean = average(rm[user][1:])
-            rm[user] = rm[user] + [similarity] + [mean]
 
-    # Add for own user. Because sort fails if it is shorter
-    rm[userID] = rm[userID] + [1] + [average(rm[userID][1:])]
 
-    rm.sort(reverse=False, key=lambda x: x[5])
+    user_id_row = rm.loc[user_id]
 
-    print("AFTER SORT: ", rm)
 
-    k_closest = rm[1: k + 1]
+    with_pearson = rm.corrwith(user_id_row, axis=1)
+
+    sorted_pearson = with_pearson.sort_values(ascending=False)
+
+
+    k_closest = sorted_pearson[1: k + 1]
 
     print("K CLOSEST ", k_closest)
 
-    # Predict the rate of item j
+    # Find articles user_id has not read
+    user_articles = df_user_item.loc[user_id]
 
-    '''numerator = 0
-    denominator = 0
+    user_unread_articles = user_articles[user_articles != 1]
 
-    for user in range(len(k_closest)):
-        # for item in range(len(k_closest[user]) - 2):
-        numerator += k_closest[user][5] * (k_closest[user][3] - k_closest[user][6])
-        denominator += abs(k_closest[user][5])
+    k_user_read_articles = df_user_item.loc[k_closest.index[0]]
+    k_user_read_articles = k_user_read_articles[k_user_read_articles != 0]
 
-    ruj = rm[userID][6] + numerator / denominator
-    print(ruj)'''
+    print(k_user_read_articles)
 
-    return k_closest
+    for i in range(1, len(k_closest)):
+        temp = df_user_item.loc[k_closest.index[i]]
+        temp = temp[temp != 0]
+        print(i)
+        print(temp)
+        k_user_read_articles = k_user_read_articles.combine(temp, max, fill_value=0)
 
+    #k_user_read_articles = k_user_articles[k_user_articles != 0]
+
+    idx1 = user_unread_articles.index
+    idx2 = k_user_read_articles.index
+
+    recommended_articles = idx2.intersection(idx1)
+
+    return recommended_articles
 
 
 # Plot prediction
 
 
-if __name__ == '__main__':
+#if __name__ == '__main__':
     # load temp_data
     # map_lst = []
     # for line in open('data/active1000/20170101'):
@@ -169,11 +173,14 @@ if __name__ == '__main__':
     # content_recommendation(df)
 
     ### Collaboratib filtering
+   # data = [[10, 1, 3, 0, 1],
+   #         [30, 20, 4, 10, 1],
+   #         [5, 30, 2, 6, 7],
+   #         [6, 20, 6, 0, 4],
+   #         [10, 20, 5, 0, 1],
+   #         [8, 9, 5, 0, 1]]
 
-    rm = [["u0", 10, 1, 3, 0, 1],
-          ["u1",30, 20, 4, 10, 1],
-          ["u2", 5, 30, 2, 6, 7],
-          ["u3", 6, 20, 6, 0, 4],
-          ["u4", 10, 20, 5, 0, 1]]
+    #rm = pd.DataFrame(array(data), columns=["cat1", "cat2", "key1", "key2", "key3"],
+    #                 index=['u1', 'u2', 'u3', 'u4', 'u5', 'u6'])
 
-    collaborative_filtering_user_based(rm, 0)
+    #collaborative_filtering_user_based(rm, 0)
