@@ -11,6 +11,7 @@ def collaborative_filtering_user_based(rm, df_user_item, user_id, k=2):
     sorted_pearson = with_pearson.sort_values(ascending=False)
     k_closest = sorted_pearson[1: k + 1]
 
+
     # Find articles user_id has not read
     user_articles = df_user_item.loc[user_id]
 
@@ -32,7 +33,7 @@ def collaborative_filtering_user_based(rm, df_user_item, user_id, k=2):
     recommended_articles = idx2.intersection(idx1)
 
     # returns list with articles the given user will like
-    return recommended_articles
+    return {"user_id": user_id, "articles": recommended_articles}
 
 
 
