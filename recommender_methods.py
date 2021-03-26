@@ -1,102 +1,40 @@
-
-import json
-import pandas as pd
-import matplotlib.pyplot as plt
-from example_code import project_example
-from sklearn.metrics.pairwise import linear_kernel
-from sklearn.feature_extraction.text import TfidfVectorizer
-
-
-def collaborative_filtering(train, test):
+def collaborative_filtering_user_based(rm, df_user_item, user_id, k=2):
     """
-    [From project_example, slightly edited]
-    performes collaborative_filtering on train, test and plots the learning curve.
+    performes user-based collaborative_filtering on a category and key word rating matrix. It returns the k-closest user
+    to a given user read articles that the given user has not read.
     """
-    # train and test model with matrix factorization
-    mf_als = project_example.mf.ExplicitMF(train, n_factors=40,
-                                           user_reg=0.0, item_reg=0.0)
-    iter_array = [1, 2, 5, 10, 25, 50, 100]
-    mf_als.calculate_learning_curve(iter_array, test)
-    # plot out learning curves
-    plot_learning_curve(iter_array, mf_als)
+    # Compute peer group of the user
+
+    user_id_row = rm.loc[user_id]
+    with_pearson = rm.corrwith(user_id_row, axis=1)
+
+    sorted_pearson = with_pearson.sort_values(ascending=False)
+    k_closest = sorted_pearson[1: k + 1]
 
 
-def plot_learning_curve(iter_array, model):
-    """
-    [From project_example, fixed faulty code in explicitMF]
-    plots learning_curve over iterations
-    """
-    print(iter_array, model.train_mse)
-    plt.plot(iter_array, model.train_mse,
-             label='Training', linewidth=5)
-    plt.plot(iter_array, model.test_mse,
-             label='Test', linewidth=5)
+    # Find articles user_id has not read
+    user_articles = df_user_item.loc[user_id]
 
-    plt.xticks(fontsize=16)
-    plt.yticks(fontsize=16)
-    plt.xlabel('iterations', fontsize=30)
-    plt.ylabel('MSE', fontsize=30)
-    plt.legend(loc='best', fontsize=20)
-    plt.show()
+    user_unread_articles = user_articles[user_articles != 1]
 
+    # Find articles k users have read
+    k_user_read_articles = df_user_item.loc[k_closest.index[0]]
+    k_user_read_articles = k_user_read_articles[k_user_read_articles != 0]
 
-def content_processing(df):
-    """
-        [From project_example]
-        Remove events which are front page events, and calculate cosine similarities between
-        items. Here cosine similarity are only based on item category information, others such
-        as title and text can also be used.
-        Feature selection part is based on TF-IDF process.
-    """
-    df = df[df['documentId'].notnull()]
-    df.drop_duplicates(subset=['userId', 'documentId'], inplace=True)
-    df['category'] = df['category'].str.split('|')
-    df['category'] = df['category'].fillna("").astype('str')
+    for i in range(1, len(k_closest)):
+        temp = df_user_item.loc[k_closest.index[i]]
+        temp = temp[temp != 0]
+        k_user_read_articles = k_user_read_articles.combine(temp, max, fill_value=0)
 
-    item_ids = df['documentId'].unique().tolist()
-    new_df = pd.DataFrame(
-        {'documentId': item_ids, 'tid': range(1, len(item_ids)+1)})
-    df = pd.merge(df, new_df, on='documentId', how='outer')
-    df_item = df[['tid', 'category']].drop_duplicates(inplace=False)
-    df_item.sort_values(by=['tid', 'category'], ascending=True, inplace=True)
+    # Find intersection between given user's not read articles and k users read articles
+    idx1 = user_unread_articles.index
+    idx2 = k_user_read_articles.index
 
-    # select features/words using TF-IDF
-    tf = TfidfVectorizer(analyzer='word', ngram_range=(1, 2), min_df=0)
-    tfidf_matrix = tf.fit_transform(df_item['category'])
-    print('Dimension of feature vector: {}'.format(tfidf_matrix.shape))
-    # measure similarity of two articles with cosine similarity
+    recommended_articles = idx2.intersection(idx1)
 
-    cosine_sim = linear_kernel(tfidf_matrix, tfidf_matrix)
-
-    print("Similarity Matrix:")
-    print(cosine_sim[:4, :4])
-    return cosine_sim, df
+    # returns list with articles the given user will like
+    return {"user_id": user_id, "articles": recommended_articles}
 
 
-def content_recommendation(df, k=20):
-    """
-        [From project_example]
-        Generate top-k list according to cosine similarity
-    """
-    cosine_sim, df = content_processing(df)
-    df = df[['userId', 'time', 'tid', 'title', 'category']]
-    df.sort_values(by=['userId', 'time'], ascending=True, inplace=True)
-    print(df[:20])  # see how the dataset looks like
-    pred, actual = [], []
-    puid, ptid1, ptid2 = None, None, None
-    for row in df.itertuples():
-        uid, tid = row[1], row[3]
-        if uid != puid and puid is not None:
-            idx = ptid1
-            sim_scores = list(enumerate(cosine_sim[idx]))
-            sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
-            sim_scores = sim_scores[1:k+1]
-            sim_scores = [i for i, j in sim_scores]
-            pred.append(sim_scores)
-            actual.append(ptid2)
-            puid, ptid1, ptid2 = uid, tid, tid
-        else:
-            ptid1 = ptid2
-            ptid2 = tid
-            puid = uid
-    return pred, actual
+
+
