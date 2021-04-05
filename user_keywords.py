@@ -14,7 +14,6 @@ def load_content_data(path):
             obj = json.loads(open(file_name).readline().strip())
             if not obj is None:
                 d = {}
-                # TODO: extract correct field from list of fields
                 for field in obj['fields']:
                     if field['field'] in extract_fields:
                         d[field['field']] = field['value']
