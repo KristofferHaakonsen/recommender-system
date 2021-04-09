@@ -1,6 +1,6 @@
 def evaluate(pred, actual, k, num_requests):
     """
-    Evaluate recommendations according to recall@k, ARHR@k, and 
+    Evaluate recommendations according to recall@k, ARHR@k, and CTR@k
     k: top-k
     num_request: The number of requests for predictions
     """
