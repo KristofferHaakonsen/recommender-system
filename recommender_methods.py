@@ -32,7 +32,7 @@ def collaborative_filtering_user_based(rm, df_user_item, user_id, k, n):
 
     recommended_articles = idx2.intersection(idx1)
 
-    # Only recomend n-articles
+    # Only recommend n-articles
     recommended_articles = recommended_articles[:n]
 
     # returns list with articles the given user will like
