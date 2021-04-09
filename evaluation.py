@@ -4,11 +4,12 @@ def evaluate_top_k(pred, actual, num_requests, k):
     k: top-k
     num_request: The number of requests for predictions
     """
- 
+
     total_num = len(actual)
     tp = 0.
-    arhr = 0.  
+    arhr = 0.
 
+    # element represents a user and contains it's recommended articles
     for element in pred:
         pred_articles = element.get("articles").tolist()
         pred_articles = pred_articles[:k]
@@ -16,7 +17,6 @@ def evaluate_top_k(pred, actual, num_requests, k):
             if t in p:
                 tp += 1.
                 arhr += 1. / float(pred_articles.index(t) + 1.)
-                
 
     recall = tp / float(total_num)
     arhr = arhr / len(actual)
@@ -32,10 +32,10 @@ def evaluate(pred, actual, num_requests):
     Evaluate recommendations according to recall, ARHR, and CTR
     num_request: The number of requests for predictions
     """
- 
+
     total_num = len(actual)
     tp = 0.
-    arhr = 0.  
+    arhr = 0.
 
     for element in pred:
         pred_articles = element.get("articles").tolist()
@@ -43,7 +43,6 @@ def evaluate(pred, actual, num_requests):
             if t in p:
                 tp += 1.
                 arhr += 1. / float(pred_articles.index(t) + 1.)
-                
 
     recall = tp / float(total_num)
     arhr = arhr / len(actual)
