@@ -38,7 +38,7 @@ def evaluate(pred, actual, k_limit=None):
     if not k_limit:
         k_limit = ''
         prefix = ''
-    print("\nGlobal recall{} is {:.4f}".format(
+    print("\nAverage recall{} is {:.4f}".format(
         prefix + str(k_limit), recall_global))
     print("ARHR{} is {:.4f}".format(prefix + str(k_limit), arhr))
     print("CTR{} is {:.4f}%".format(prefix + str(k_limit), ctr))
