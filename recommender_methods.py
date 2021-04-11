@@ -1,4 +1,4 @@
-def collaborative_filtering_user_based(rm, df_user_item, user_id, k=2):
+def collaborative_filtering_user_based(rm, df_user_item, user_id, k_closest_users):
     """
     performes user-based collaborative_filtering on a category and key word rating matrix. It returns the k-closest user
     to a given user read articles that the given user has not read.
@@ -9,7 +9,7 @@ def collaborative_filtering_user_based(rm, df_user_item, user_id, k=2):
     with_pearson = rm.corrwith(user_id_row, axis=1)
 
     sorted_pearson = with_pearson.sort_values(ascending=False)
-    k_closest = sorted_pearson[1: k + 1]
+    k_closest = sorted_pearson[1: k_closest_users + 1]
 
 
     # Find articles user_id has not read
