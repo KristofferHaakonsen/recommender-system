@@ -6,8 +6,7 @@ import numpy as np
 
 def load_content_data(path):
     article_lst = []
-    extract_fields = ['id', 'publishtime', 'title', 'description', 'keyword',
-                      'kw-classification', 'kw-category', 'kw-concept', 'kw-company', 'kw-entity', 'kw-location']
+    extract_fields = ['id', 'publishtime', 'keyword']
     for f in os.listdir(path):
         file_name = os.path.join(path, f)
         if os.path.isfile(file_name):
