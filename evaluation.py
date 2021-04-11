@@ -28,12 +28,6 @@ def evaluate(pred, actual, k_limit=None):
                 arhr += 1. / float(ind + 1.)
 
 
-    '''
-    print("num_actually " ,num_actual)
-    print("num_users : " , num_users)
-    print("num_requests : " , num_requests)
-    print("tp_global", tp_global)
-    '''
     arhr = arhr / num_users
     ctr = tp_global / num_requests * 100
     recall = tp_global/num_actual      
