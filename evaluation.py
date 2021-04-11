@@ -5,7 +5,6 @@ def evaluate(pred, actual, k_limit=None):
     """
 
     num_users = len(actual)     
-    num_requests = 0
     tp_global = 0.
     arhr = 0.
     num_actual = 0      # The numbers of actual articles
@@ -18,10 +17,8 @@ def evaluate(pred, actual, k_limit=None):
         actual_series = actual.loc[element["user_id"]]
         # test_set_positives_list is a list of all test-set entries with value = 1.0 for this user
         test_set_positives_list = list(actual_series[actual_series == 1].index)
-        tp_user = 0
-        num_actual += len(pred_articles) # Count all the actuall clicks
+        num_actual += len(test_set_positives_list) # Count all the actuall clicks
         for ind, pred in enumerate(pred_articles):
-            num_requests += 1
             if pred in test_set_positives_list:
                 # the prediction/suggestion is a true positive (tp)
                 tp_global += 1.
@@ -29,7 +26,7 @@ def evaluate(pred, actual, k_limit=None):
 
 
     arhr = arhr / num_users
-    ctr = tp_global / num_requests * 100
+    ctr = tp_global / num_actual * 100
     recall = tp_global/num_actual      
 
     prefix = '@'
